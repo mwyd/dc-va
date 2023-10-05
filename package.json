@@ -3,23 +3,24 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx tsc && node build/index.js",
     "build": "npx tsc",
-    "watch": "npx tsc --watch",
-    "lint": "npx eslint src"
+    "lint": "npx eslint src",
+    "prettier:write": "npx prettier src --write",
+    "prettier:check": "npx prettier src --check"
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "tsc": "^2.0.4"
-  },
   "devDependencies": {
+    "@types/node": "^20.8.2",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
     "eslint": "^8.50.0",
     "prettier": "3.0.3",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
   }
 }
