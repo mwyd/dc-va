@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  va:
+    container_name: va
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    volumes:
+      - ./:/app
+    tty: true
