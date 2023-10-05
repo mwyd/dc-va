@@ -1,3 +1,3 @@
 export interface TextToSpeechConverter {
-  convert(text: string): Promise<string>
+  convert(text: string): Promise<string>;
 }

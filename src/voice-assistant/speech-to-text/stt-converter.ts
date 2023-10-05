@@ -1,3 +1,3 @@
 export interface SpeechToTextConverter {
-  convert(file: string): Promise<string>
+  convert(file: string): Promise<string>;
 }

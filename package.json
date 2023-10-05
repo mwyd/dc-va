@@ -7,7 +7,7 @@
     "start": "npx tsc && node build/index.js",
     "build": "npx tsc",
     "lint": "npx eslint src",
-    "prettier:write": "npx prettier src --write",
+    "prettier:fix": "npx prettier src --write",
     "prettier:check": "npx prettier src --check"
   },
   "author": "",
