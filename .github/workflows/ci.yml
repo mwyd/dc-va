@@ -1,0 +1,33 @@
+name: 'ci'
+
+on: [push]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - name: Checkout to the repository
+        uses: actions/checkout@v4
+
+      - name: Set node version to ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run prettier
+        run: npm run prettier:check
+
+      - name: Run eslint
+        run: npm run lint
+
+      - name: Create build
+        run: npm run build
