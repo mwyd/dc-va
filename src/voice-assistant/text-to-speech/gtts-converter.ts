@@ -1,21 +1,31 @@
 import { TextToSpeechConverter } from "./tts-converter";
 import { spawn } from "child_process";
+import { v4 as uuidv4 } from "uuid";
+
+interface Config {
+  outDir: string;
+  lang: string;
+}
 
 export class GTTSConverter implements TextToSpeechConverter {
-  convert(text: string): Promise<string> {
-    // TODO output dir as a config variable
-    // TODO unique filename (uuid)
-    const file = "var/test.mp3";
+  constructor(private readonly config: Config) {}
+
+  public convert(text: string): Promise<string> {
+    const { outDir, lang } = this.config;
+
+    const file = `${outDir}/${uuidv4()}.mp3`;
+
+    const args = [`'${text}'`, "-o", file, "-l", lang];
 
     return new Promise((resolve, reject) => {
-      const cmd = spawn("gtts-cli", [`'${text}'`, "--output", file]);
+      const cmd = spawn("gtts-cli", args);
 
       cmd.on("close", (code) => {
         if (code !== 0) {
-          reject(`Command exited with code ${code}`);
+          reject(`Command failed with code: ${code}`);
+        } else {
+          resolve(file);
         }
-
-        resolve(file);
       });
     });
   }
