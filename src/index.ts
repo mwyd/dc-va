@@ -1,14 +1,30 @@
 import "./dotenv";
 
-import { Client, Events, GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits } from "discord.js";
 import {
   EndBehaviorType,
   getVoiceConnection,
   joinVoiceChannel,
 } from "@discordjs/voice";
-import { OpusEncoder } from "@discordjs/opus";
+import { Engine } from "./engine";
+import { VoiceRecorder } from "./voice/voice-recorder";
+import { GTTSConverter } from "./engine/tts/gtts-converter";
+import { OpenAISTTConverter } from "./engine/stt/openai-stt-converter";
+import { OpenAIAssistant } from "./engine/assistant/openai-assistant";
 
-const encoder = new OpusEncoder(48000, 2);
+const engine = new Engine(
+  new GTTSConverter({ outDir: "var", lang: "pl" }),
+  new OpenAISTTConverter({ model: "whisper-1", lang: "pl" }),
+  new OpenAIAssistant({ model: "gpt-3.5-turbo", role: "user" }),
+);
+
+console.log(engine);
+
+const voiceRecorder = new VoiceRecorder({
+  outDir: "var",
+  rate: 48000,
+  channels: 2,
+});
 
 const client = new Client({
   intents: [
@@ -19,11 +35,11 @@ const client = new Client({
   ],
 });
 
-client.once(Events.ClientReady, (c) => {
+client.once("ready", (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
 });
 
-client.on(Events.MessageCreate, (message) => {
+client.on("messageCreate", (message) => {
   if (message.content !== "!join") {
     return;
   }
@@ -55,17 +71,11 @@ client.on(Events.MessageCreate, (message) => {
       },
     });
 
-    opusStream.on("data", (packet) => {
-      console.log(encoder.decode(packet));
-    });
-
-    opusStream.on("end", () => {
-      console.log("Done");
-    });
+    voiceRecorder.record(opusStream).then(console.log);
   });
 });
 
-client.on(Events.MessageCreate, (message) => {
+client.on("messageCreate", (message) => {
   if (message.content === "!leave") {
     const channel = message.member?.voice.channel;
 
