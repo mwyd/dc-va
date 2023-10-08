@@ -25,9 +25,9 @@ export class VoiceRecorder {
     const pcmFile = `${outDir}/${id}.pcm`;
     const convertedFile = `${outDir}/${id}.mp3`;
 
-    const outputStream = fs.createWriteStream(pcmFile);
-
     return new Promise((resolve, reject) => {
+      const outputStream = fs.createWriteStream(pcmFile);
+
       audioStream.on("data", (packet) => {
         outputStream.write(this.encoder.decode(packet));
       });
@@ -47,9 +47,9 @@ export class VoiceRecorder {
           convertedFile,
         ];
 
-        const cmd = spawn("ffmpeg", args);
+        const process = spawn("ffmpeg", args);
 
-        cmd.on("close", (code) => {
+        process.on("close", (code) => {
           if (code !== 0) {
             reject(`Command failed with code: ${code}`);
           } else {

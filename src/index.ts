@@ -2,6 +2,8 @@ import "./dotenv";
 
 import { Client, GatewayIntentBits } from "discord.js";
 import {
+  createAudioPlayer,
+  createAudioResource,
   EndBehaviorType,
   getVoiceConnection,
   joinVoiceChannel,
@@ -15,10 +17,8 @@ import { OpenAIAssistant } from "./engine/assistant/openai-assistant";
 const engine = new Engine(
   new GTTSConverter({ outDir: "var", lang: "pl" }),
   new OpenAISTTConverter({ model: "whisper-1", lang: "pl" }),
-  new OpenAIAssistant({ model: "gpt-3.5-turbo", role: "user" }),
+  new OpenAIAssistant({ model: "gpt-4", role: "user" }),
 );
-
-console.log(engine);
 
 const voiceRecorder = new VoiceRecorder({
   outDir: "var",
@@ -57,21 +57,49 @@ client.on("messageCreate", (message) => {
     selfDeaf: false,
   });
 
+  let processing = false;
+
   voiceConnection.receiver.speaking.on("start", (userId) => {
-    if (userId !== message.author.id) {
+    if (userId !== message.author.id || processing) {
       return;
     }
 
-    console.log("Listening");
+    processing = true;
 
-    const opusStream = voiceConnection.receiver.subscribe(userId, {
+    const opusStream = voiceConnection.receiver.subscribe(message.author.id, {
       end: {
         behavior: EndBehaviorType.AfterSilence,
         duration: 300,
       },
     });
 
-    voiceRecorder.record(opusStream).then(console.log);
+    voiceRecorder.record(opusStream).then(async (file) => {
+      console.log("Processing");
+
+      const stt = await engine.stt.convert(file);
+      const response = await engine.assistant.chat(stt);
+      const tts = await engine.tts.convert(response);
+
+      console.log("Playing");
+
+      const resource = createAudioResource(tts);
+      const player = createAudioPlayer();
+
+      voiceConnection.subscribe(player);
+
+      player.play(resource);
+
+      player.on("stateChange", (oldState, newState) => {
+        console.log(newState.status, oldState.status);
+
+        if (
+          (oldState.status == "playing" && newState.status == "idle") ||
+          newState.status == "autopaused"
+        ) {
+          processing = false;
+        }
+      });
+    });
   });
 });
 

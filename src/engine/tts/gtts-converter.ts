@@ -18,9 +18,9 @@ export class GTTSConverter implements TextToSpeechConverter {
     const args = [`'${text}'`, "-o", file, "-l", lang];
 
     return new Promise((resolve, reject) => {
-      const cmd = spawn("gtts-cli", args);
+      const process = spawn("gtts-cli", args);
 
-      cmd.on("close", (code) => {
+      process.on("close", (code) => {
         if (code !== 0) {
           reject(`Command failed with code: ${code}`);
         } else {
