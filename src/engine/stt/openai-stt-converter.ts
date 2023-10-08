@@ -1,5 +1,5 @@
 import { SpeechToTextConverter } from "./stt-converter";
-import { openai } from "../openai";
+import { openai } from "../../openai";
 import fs from "fs";
 
 interface Config {
@@ -7,7 +7,7 @@ interface Config {
   lang: string;
 }
 
-export class OpenAiSTTConverter implements SpeechToTextConverter {
+export class OpenAISTTConverter implements SpeechToTextConverter {
   constructor(private readonly config: Config) {}
 
   public async convert(file: string): Promise<string> {

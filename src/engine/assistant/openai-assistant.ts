@@ -1,12 +1,12 @@
 import { Assistant } from "./assistant";
-import { openai } from "../openai";
+import { openai } from "../../openai";
 
 interface Config {
   model: string;
   role: "system" | "user" | "assistant";
 }
 
-export class OpenAiAssistant implements Assistant {
+export class OpenAIAssistant implements Assistant {
   constructor(private readonly config: Config) {}
 
   public async chat(message: string): Promise<string> {
