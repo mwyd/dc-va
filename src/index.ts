@@ -17,7 +17,7 @@ import { OpenAIAssistant } from "./engine/assistant/openai-assistant";
 const engine = new Engine(
   new GTTSConverter({ outDir: "var", lang: "pl" }),
   new OpenAISTTConverter({ model: "whisper-1", lang: "pl" }),
-  new OpenAIAssistant({ model: "gpt-4", role: "user" }),
+  new OpenAIAssistant({ model: "gpt-3.5-turbo", role: "user" }),
 );
 
 const voiceRecorder = new VoiceRecorder({
@@ -76,9 +76,7 @@ client.on("messageCreate", (message) => {
     voiceRecorder.record(opusStream).then(async (file) => {
       console.log("Processing");
 
-      const stt = await engine.stt.convert(file);
-      const response = await engine.assistant.chat(stt);
-      const tts = await engine.tts.convert(response);
+      const tts = await engine.process(file);
 
       console.log("Playing");
 

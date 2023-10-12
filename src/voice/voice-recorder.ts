@@ -50,18 +50,24 @@ export class VoiceRecorder {
         const process = spawn("ffmpeg", args);
 
         process.on("close", (code) => {
+          fs.unlinkSync(pcmFile);
+
           if (code !== 0) {
             reject(`Command failed with code: ${code}`);
           } else {
-            fs.unlinkSync(pcmFile);
-
             resolve(convertedFile);
           }
         });
       });
 
-      audioStream.on("error", (err) => {
-        reject(err.message);
+      audioStream.on("close", () => {
+        const { readableEnded, errored } = audioStream;
+
+        if (readableEnded) {
+          return;
+        }
+
+        reject(errored?.message ?? "Stream closed before readable ended");
       });
     });
   }

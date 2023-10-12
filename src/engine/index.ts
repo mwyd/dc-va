@@ -4,8 +4,15 @@ import { Assistant } from "./assistant/assistant";
 
 export class Engine {
   constructor(
-    public readonly tts: TextToSpeechConverter,
-    public readonly stt: SpeechToTextConverter,
-    public readonly assistant: Assistant,
+    private readonly tts: TextToSpeechConverter,
+    private readonly stt: SpeechToTextConverter,
+    private readonly assistant: Assistant,
   ) {}
+
+  public async process(file: string): Promise<string> {
+    const text = await this.stt.convert(file);
+    const response = await this.assistant.chat(text);
+
+    return this.tts.convert(response);
+  }
 }
