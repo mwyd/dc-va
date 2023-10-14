@@ -17,57 +17,79 @@ export class VoiceRecorder {
     this.encoder = new OpusEncoder(config.rate, config.channels);
   }
 
-  public record(audioStream: AudioReceiveStream): Promise<string> {
-    const { outDir, rate, channels } = this.config;
+  public async record(opusStream: AudioReceiveStream): Promise<string> {
+    const rawFile = await this.saveRaw(opusStream);
+    const convertedFile = await this.convert(rawFile);
 
-    const id = uuidv4();
+    fs.unlinkSync(rawFile);
 
-    const pcmFile = `${outDir}/${id}.pcm`;
-    const convertedFile = `${outDir}/${id}.mp3`;
+    return convertedFile;
+  }
+
+  private saveRaw(opusStream: AudioReceiveStream): Promise<string> {
+    const { outDir } = this.config;
+
+    const file = `${outDir}/${uuidv4()}.pcm`;
 
     return new Promise((resolve, reject) => {
-      const outputStream = fs.createWriteStream(pcmFile);
+      const outputStream = fs.createWriteStream(file);
 
-      audioStream.on("data", (packet) => {
+      opusStream.on("error", (err) => {
+        reject(err.message);
+      });
+
+      opusStream.on("data", (packet) => {
         outputStream.write(this.encoder.decode(packet));
       });
 
-      audioStream.on("end", () => {
+      opusStream.on("close", () => {
         outputStream.destroy();
 
-        const args = [
-          "-f",
-          "s16le",
-          "-ar",
-          rate / 1000 + "k",
-          "-ac",
-          channels.toString(),
-          "-i",
-          pcmFile,
-          convertedFile,
-        ];
-
-        const process = spawn("ffmpeg", args);
-
-        process.on("close", (code) => {
-          fs.unlinkSync(pcmFile);
-
-          if (code !== 0) {
-            reject(`Command failed with code: ${code}`);
-          } else {
-            resolve(convertedFile);
-          }
-        });
-      });
-
-      audioStream.on("close", () => {
-        const { readableEnded, errored } = audioStream;
+        const { readableEnded } = opusStream;
 
         if (readableEnded) {
+          resolve(file);
+
           return;
         }
 
-        reject(errored?.message ?? "Stream closed before readable ended");
+        fs.unlinkSync(file);
+
+        reject("stream closed before readable ended");
+      });
+    });
+  }
+
+  private convert(file: string): Promise<string> {
+    const { outDir, rate, channels } = this.config;
+
+    const convertedFile = `${outDir}/${uuidv4()}.mp3`;
+
+    const args = [
+      "-f",
+      "s16le",
+      "-ar",
+      rate / 1000 + "k",
+      "-ac",
+      channels.toString(),
+      "-i",
+      file,
+      convertedFile,
+    ];
+
+    return new Promise((resolve, reject) => {
+      const process = spawn("ffmpeg", args);
+
+      process.on("error", (err) => {
+        reject(err.message);
+      });
+
+      process.on("close", (code) => {
+        if (code !== 0) {
+          reject(`ffmpeg failed with code: ${code}`);
+        } else {
+          resolve(file);
+        }
       });
     });
   }

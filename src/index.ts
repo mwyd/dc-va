@@ -26,6 +26,8 @@ const voiceRecorder = new VoiceRecorder({
   channels: 2,
 });
 
+const player = createAudioPlayer();
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -73,31 +75,37 @@ client.on("messageCreate", (message) => {
       },
     });
 
-    voiceRecorder.record(opusStream).then(async (file) => {
-      console.log("Processing");
+    voiceRecorder
+      .record(opusStream)
+      .then(async (file) => {
+        console.log("Processing");
 
-      const tts = await engine.process(file);
+        const tts = await engine.process(file);
 
-      console.log("Playing");
+        console.log("Playing");
 
-      const resource = createAudioResource(tts);
-      const player = createAudioPlayer();
+        const resource = createAudioResource(tts);
 
-      voiceConnection.subscribe(player);
+        voiceConnection.subscribe(player);
 
-      player.play(resource);
+        player.play(resource);
 
-      player.on("stateChange", (oldState, newState) => {
-        console.log(newState.status, oldState.status);
+        player.on("stateChange", (oldState, newState) => {
+          console.log(newState.status, oldState.status);
 
-        if (
-          (oldState.status == "playing" && newState.status == "idle") ||
-          newState.status == "autopaused"
-        ) {
-          processing = false;
-        }
+          if (
+            (oldState.status == "playing" && newState.status == "idle") ||
+            newState.status == "autopaused"
+          ) {
+            processing = false;
+          }
+        });
+      })
+      .catch((err) => {
+        processing = false;
+
+        console.log(err);
       });
-    });
   });
 });
 

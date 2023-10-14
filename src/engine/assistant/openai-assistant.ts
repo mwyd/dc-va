@@ -1,8 +1,9 @@
 import { Assistant } from "./assistant";
 import { openai } from "../../openai";
+import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions";
 
 interface Config {
-  model: string;
+  model: ChatCompletionCreateParamsBase["model"];
   role: "system" | "user" | "assistant";
 }
 

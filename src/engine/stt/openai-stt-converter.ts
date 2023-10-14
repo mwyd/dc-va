@@ -1,9 +1,10 @@
 import { SpeechToTextConverter } from "./stt-converter";
 import { openai } from "../../openai";
 import fs from "fs";
+import { TranscriptionCreateParams } from "openai/resources/audio";
 
 interface Config {
-  model: string;
+  model: TranscriptionCreateParams["model"];
   lang: string;
 }
 
