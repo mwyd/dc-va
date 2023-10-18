@@ -1,32 +1,9 @@
 import "./dotenv";
 
 import { Client, GatewayIntentBits } from "discord.js";
-import {
-  createAudioPlayer,
-  createAudioResource,
-  EndBehaviorType,
-  getVoiceConnection,
-  joinVoiceChannel,
-} from "@discordjs/voice";
-import { Engine } from "./engine";
-import { VoiceRecorder } from "./voice/voice-recorder";
-import { GTTSConverter } from "./engine/tts/gtts-converter";
-import { OpenAISTTConverter } from "./engine/stt/openai-stt-converter";
-import { OpenAIAssistant } from "./engine/assistant/openai-assistant";
+import { commandManager, logger } from "./config";
 
-const engine = new Engine(
-  new GTTSConverter({ outDir: "var", lang: "pl" }),
-  new OpenAISTTConverter({ model: "whisper-1", lang: "pl" }),
-  new OpenAIAssistant({ model: "gpt-3.5-turbo", role: "user" }),
-);
-
-const voiceRecorder = new VoiceRecorder({
-  outDir: "var",
-  rate: 48000,
-  channels: 2,
-});
-
-const player = createAudioPlayer();
+commandManager.load().then(() => commandManager.synchronize());
 
 const client = new Client({
   intents: [
@@ -38,87 +15,23 @@ const client = new Client({
 });
 
 client.once("ready", (c) => {
-  console.log(`Ready! Logged in as ${c.user.tag}`);
+  logger.info(`Ready! Logged in as ${c.user.tag}`);
 });
 
-client.on("messageCreate", (message) => {
-  if (message.content !== "!join") {
+client.on("interactionCreate", (interaction) => {
+  if (!interaction.isChatInputCommand()) {
     return;
   }
 
-  const channel = message.member?.voice.channel;
+  const command = commandManager.get(interaction.commandName);
 
-  if (!channel) {
+  if (!command) {
+    logger.warn(`Command '${interaction.commandName}' not found`);
+
     return;
   }
 
-  const voiceConnection = joinVoiceChannel({
-    channelId: channel.id,
-    guildId: channel.guild.id,
-    adapterCreator: channel.guild.voiceAdapterCreator,
-    selfDeaf: false,
-  });
-
-  let processing = false;
-
-  voiceConnection.receiver.speaking.on("start", (userId) => {
-    if (userId !== message.author.id || processing) {
-      return;
-    }
-
-    processing = true;
-
-    const opusStream = voiceConnection.receiver.subscribe(message.author.id, {
-      end: {
-        behavior: EndBehaviorType.AfterSilence,
-        duration: 300,
-      },
-    });
-
-    voiceRecorder
-      .record(opusStream)
-      .then(async (file) => {
-        console.log("Processing");
-
-        const tts = await engine.process(file);
-
-        console.log("Playing");
-
-        const resource = createAudioResource(tts);
-
-        voiceConnection.subscribe(player);
-
-        player.play(resource);
-
-        player.on("stateChange", (oldState, newState) => {
-          console.log(newState.status, oldState.status);
-
-          if (
-            (oldState.status == "playing" && newState.status == "idle") ||
-            newState.status == "autopaused"
-          ) {
-            processing = false;
-          }
-        });
-      })
-      .catch((err) => {
-        processing = false;
-
-        console.log(err);
-      });
-  });
-});
-
-client.on("messageCreate", (message) => {
-  if (message.content === "!leave") {
-    const channel = message.member?.voice.channel;
-
-    if (!channel) {
-      return;
-    }
-
-    getVoiceConnection(channel.guild.id)?.destroy();
-  }
+  command.execute(interaction);
 });
 
 client.login(process.env.DISCORD_TOKEN);
