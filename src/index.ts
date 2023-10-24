@@ -18,7 +18,7 @@ client.once("ready", (c) => {
   logger.info(`Ready! Logged in as ${c.user.tag}`);
 });
 
-client.on("interactionCreate", (interaction) => {
+client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) {
     return;
   }
@@ -31,7 +31,13 @@ client.on("interactionCreate", (interaction) => {
     return;
   }
 
-  command.execute(interaction);
+  try {
+    await command.execute(interaction);
+  } catch (err) {
+    logger.warn(
+      `Error when executing command '${interaction.commandName}' - ${err}`,
+    );
+  }
 });
 
 client.login(process.env.DISCORD_TOKEN);

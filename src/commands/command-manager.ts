@@ -22,13 +22,20 @@ export class CommandManager {
   public async load(): Promise<void> {
     const { dir, filter } = this.config;
 
-    const files = fs.readdirSync(dir).filter(filter);
+    const folders = fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
 
-    for (const file of files) {
-      const { default: command } = await import(path.join(__dirname, file));
+    for (const folder of folders) {
+      const files = fs.readdirSync(path.join(dir, folder)).filter(filter);
 
-      if (command instanceof Command) {
-        this.commands.set(command.data.name, command);
+      for (const file of files) {
+        const { default: command } = await import(path.join(dir, folder, file));
+
+        if (command instanceof Command) {
+          this.commands.set(command.data.name, command);
+        }
       }
     }
   }

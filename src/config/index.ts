@@ -26,7 +26,7 @@ export const ffmpeg = new FFmpeg();
 export const discordREST = new REST().setToken(process.env.DISCORD_TOKEN);
 
 export const commandManager = new CommandManager({
-  cacheDir: "var",
+  cacheDir: "var/cache",
   dir: path.join(__dirname, "../commands"),
   filter: (file) => file.endsWith("-command.js"),
 });
