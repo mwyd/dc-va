@@ -16,7 +16,7 @@ export default async function accessVoiceConnection(
       ephemeral: true,
     });
 
-    logger.error("Internal error - no guild id defined");
+    logger.error("Internal error - no guild defined");
 
     return;
   }
@@ -25,11 +25,11 @@ export default async function accessVoiceConnection(
 
   if (!voiceConnection) {
     await interaction.reply({
-      content: "There is no active bot connection",
+      content: "Cannot find voice connection",
       ephemeral: true,
     });
 
-    logger.error("Ask action - missing voice connection");
+    logger.error("Ask action - cannot find voice connection");
 
     return;
   }
@@ -38,7 +38,7 @@ export default async function accessVoiceConnection(
 
   if (voiceConnection.joinConfig.channelId !== userChannelId) {
     await interaction.reply({
-      content: "You have to be on channel to mange bot",
+      content: "Only voice channel members can perform this action",
       ephemeral: true,
     });
 

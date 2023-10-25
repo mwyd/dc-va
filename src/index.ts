@@ -35,7 +35,7 @@ client.on("interactionCreate", async (interaction) => {
     await command.execute(interaction);
   } catch (err) {
     logger.warn(
-      `Error when executing command '${interaction.commandName}' - ${err}`,
+      `Error while executing command '${interaction.commandName}' - ${err}`,
     );
   }
 });

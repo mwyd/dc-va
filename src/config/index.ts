@@ -9,14 +9,16 @@ import path from "path";
 import { REST } from "discord.js";
 import winston from "winston";
 
+export const ASK_SILENCE_TIMEOUT = 500;
+
 export const engine = new Engine(
-  new GTTSConverter({ outDir: "var", lang: "pl" }),
+  new GTTSConverter({ outDir: "var/tmp", lang: "pl" }),
   new OpenAISTTConverter({ model: "whisper-1", lang: "pl" }),
   new OpenAIAssistant({ model: "gpt-3.5-turbo", role: "user" }),
 );
 
 export const voiceRecorder = new VoiceRecorder({
-  outDir: "var",
+  outDir: "var/tmp",
   rate: 48000,
   channels: 2,
 });

@@ -6,7 +6,12 @@ import {
   VoiceConnection,
 } from "@discordjs/voice";
 import { ButtonAction } from "./button-action";
-import { engine, logger, voiceRecorder } from "../../../config";
+import {
+  ASK_SILENCE_TIMEOUT,
+  engine,
+  logger,
+  voiceRecorder,
+} from "../../../config";
 import accessVoiceConnection, { actionManager } from "./index";
 import fs from "fs";
 
@@ -55,7 +60,7 @@ export default class AskAction extends ButtonAction {
       try {
         await this.listen(voiceConnection, interaction);
       } catch (err) {
-        logger.error(`Error when listening - ${err}`);
+        logger.error(`Error while listening - ${err}`);
       }
     };
 
@@ -70,7 +75,7 @@ export default class AskAction extends ButtonAction {
 
       this.button.setLabel("Processing");
 
-      interaction.editReply({ components: [actionManager.rowComponent] });
+      this.editReply(interaction);
 
       speaking.removeListener("start", listener);
     });
@@ -87,7 +92,7 @@ export default class AskAction extends ButtonAction {
     const opusStream = voiceConnection.receiver.subscribe(user.id, {
       end: {
         behavior: EndBehaviorType.AfterSilence,
-        duration: 500,
+        duration: ASK_SILENCE_TIMEOUT,
       },
     });
 
@@ -119,9 +124,17 @@ export default class AskAction extends ButtonAction {
         this.button.setDisabled(false);
         this.button.setLabel("Ask");
 
-        interaction.editReply({ components: [actionManager.rowComponent] });
+        this.editReply(interaction);
       }
     });
+  }
+
+  private async editReply(interaction: ButtonInteraction): Promise<void> {
+    try {
+      await interaction.editReply({ components: [actionManager.rowComponent] });
+    } catch (err) {
+      logger.warn(`Error while updating reply - ${err}`);
+    }
   }
 
   private setState(state: State): void {

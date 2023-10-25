@@ -27,7 +27,7 @@ class AssistCommand extends Command {
   public async execute(interaction: CommandInteraction): Promise<void> {
     if (this.state === State.Connected) {
       await interaction.reply({
-        content: "There is another instance running",
+        content: "Already connected to voice channel",
         ephemeral: true,
       });
 
@@ -40,7 +40,7 @@ class AssistCommand extends Command {
 
     if (!channel) {
       await interaction.reply({
-        content: "You have to be connected to voice channel",
+        content: "Only voice channel members can perform this action",
         ephemeral: true,
       });
 
@@ -77,7 +77,7 @@ class AssistCommand extends Command {
         await action.execute(interaction);
       } catch (err) {
         logger.error(
-          `Error when executing action '${interaction.customId}' - ${err}`,
+          `Error while executing action '${interaction.customId}' - ${err}`,
         );
       }
     };
