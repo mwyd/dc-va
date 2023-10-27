@@ -11,11 +11,18 @@ import winston from "winston";
 
 export const ASK_SILENCE_TIMEOUT = 500;
 
-export const engine = new Engine(
-  new GTTSConverter({ outDir: "var/tmp", lang: "pl" }),
-  new OpenAISTTConverter({ model: "whisper-1", lang: "pl" }),
-  new OpenAIAssistant({ model: "gpt-3.5-turbo", role: "user" }),
-);
+const tts = new GTTSConverter({ outDir: "var/tmp", lang: "pl" });
+
+const stt = new OpenAISTTConverter({ model: "whisper-1", lang: "pl" });
+
+const assistant = new OpenAIAssistant({
+  model: "gpt-3.5-turbo",
+  role: "user",
+  minChunkLength: 20,
+  stopCharacters: [".", "!", "?"],
+});
+
+export const engine = new Engine(tts, stt, assistant);
 
 export const voiceRecorder = new VoiceRecorder({
   outDir: "var/tmp",

@@ -18,12 +18,13 @@ import fs from "fs";
 enum State {
   Idle = "idle",
   Listening = "listening",
-  Speaking = "speaking",
   Processing = "processing",
+  Quo = "quo",
 }
 
 export default class AskAction extends ButtonAction {
   private state: State = State.Idle;
+  private ttsStack: string[] = [];
 
   constructor() {
     const button = new ButtonBuilder()
@@ -100,24 +101,32 @@ export default class AskAction extends ButtonAction {
 
     this.setState(State.Processing);
 
-    const tts = await engine.process(file);
-
-    this.setState(State.Speaking);
-
     const player = createAudioPlayer();
-    const resource = createAudioResource(tts);
-
-    voiceConnection.subscribe(player);
-
-    player.play(resource);
 
     player.on("stateChange", (oldState, newState) => {
       if (
         (oldState.status == "playing" && newState.status == "idle") ||
         newState.status == "autopaused"
       ) {
+        const tts = this.ttsStack.shift();
+
+        if (tts) {
+          fs.unlinkSync(tts);
+        }
+
+        const nextTts = this.ttsStack[0];
+
+        if (nextTts) {
+          player.play(createAudioResource(nextTts));
+
+          return;
+        }
+
+        if (this.state !== State.Quo) {
+          return;
+        }
+
         fs.unlinkSync(file);
-        fs.unlinkSync(tts);
 
         this.setState(State.Idle);
 
@@ -127,6 +136,20 @@ export default class AskAction extends ButtonAction {
         this.editReply(interaction);
       }
     });
+
+    voiceConnection.subscribe(player);
+
+    for await (const tts of engine.process(file)) {
+      this.ttsStack.push(tts);
+
+      if (this.ttsStack.length > 1) {
+        continue;
+      }
+
+      player.play(createAudioResource(tts));
+    }
+
+    this.setState(State.Quo);
   }
 
   private async editReply(interaction: ButtonInteraction): Promise<void> {

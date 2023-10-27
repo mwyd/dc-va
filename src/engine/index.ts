@@ -9,10 +9,11 @@ export class Engine {
     private readonly assistant: Assistant,
   ) {}
 
-  public async process(file: string): Promise<string> {
+  public async *process(file: string): AsyncGenerator<string> {
     const text = await this.stt.convert(file);
-    const response = await this.assistant.chat(text);
 
-    return this.tts.convert(response);
+    for await (const response of this.assistant.chat(text)) {
+      yield this.tts.convert(response);
+    }
   }
 }
