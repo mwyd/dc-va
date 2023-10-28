@@ -19,12 +19,12 @@ enum State {
   Idle = "idle",
   Listening = "listening",
   Processing = "processing",
-  Quo = "quo",
+  Finishing = "finishing",
 }
 
 export default class AskAction extends ButtonAction {
   private state: State = State.Idle;
-  private ttsStack: string[] = [];
+  private ttsQueue: string[] = [];
 
   constructor() {
     const button = new ButtonBuilder()
@@ -59,7 +59,7 @@ export default class AskAction extends ButtonAction {
       }
 
       try {
-        await this.listen(voiceConnection, interaction);
+        await this.handleSpeaking(voiceConnection, interaction);
       } catch (err) {
         logger.error(`Error while listening - ${err}`);
       }
@@ -82,7 +82,7 @@ export default class AskAction extends ButtonAction {
     });
   }
 
-  private async listen(
+  private async handleSpeaking(
     voiceConnection: VoiceConnection,
     interaction: ButtonInteraction,
   ): Promise<void> {
@@ -99,8 +99,6 @@ export default class AskAction extends ButtonAction {
 
     const file = await voiceRecorder.record(opusStream);
 
-    this.setState(State.Processing);
-
     const player = createAudioPlayer();
 
     player.on("stateChange", (oldState, newState) => {
@@ -108,13 +106,13 @@ export default class AskAction extends ButtonAction {
         (oldState.status == "playing" && newState.status == "idle") ||
         newState.status == "autopaused"
       ) {
-        const tts = this.ttsStack.shift();
+        const tts = this.ttsQueue.shift();
 
         if (tts) {
           fs.unlinkSync(tts);
         }
 
-        const nextTts = this.ttsStack[0];
+        const nextTts = this.ttsQueue[0];
 
         if (nextTts) {
           player.play(createAudioResource(nextTts));
@@ -122,11 +120,9 @@ export default class AskAction extends ButtonAction {
           return;
         }
 
-        if (this.state !== State.Quo) {
+        if (this.state !== State.Finishing) {
           return;
         }
-
-        fs.unlinkSync(file);
 
         this.setState(State.Idle);
 
@@ -139,17 +135,21 @@ export default class AskAction extends ButtonAction {
 
     voiceConnection.subscribe(player);
 
-    for await (const tts of engine.process(file)) {
-      this.ttsStack.push(tts);
+    this.setState(State.Processing);
 
-      if (this.ttsStack.length > 1) {
+    for await (const tts of engine.process(file)) {
+      this.ttsQueue.push(tts);
+
+      if (this.ttsQueue.length > 1) {
         continue;
       }
 
       player.play(createAudioResource(tts));
     }
 
-    this.setState(State.Quo);
+    fs.unlinkSync(file);
+
+    this.setState(State.Finishing);
   }
 
   private async editReply(interaction: ButtonInteraction): Promise<void> {
