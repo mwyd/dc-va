@@ -1,10 +1,11 @@
 import { Command } from "../command";
 import {
   CommandInteraction,
+  Events,
   Interaction,
   SlashCommandBuilder,
 } from "discord.js";
-import { joinVoiceChannel } from "@discordjs/voice";
+import { joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
 import { logger } from "../../config";
 import { actionManager } from "./actions";
 
@@ -60,7 +61,7 @@ class AssistCommand extends Command {
       components: [actionManager.rowComponent],
     });
 
-    const listener = async (interaction: Interaction) => {
+    const interactionListener = async (interaction: Interaction) => {
       if (!interaction.isButton()) {
         return;
       }
@@ -82,22 +83,20 @@ class AssistCommand extends Command {
       }
     };
 
-    client.on("interactionCreate", listener);
+    client.on(Events.InteractionCreate, interactionListener);
 
-    voiceConnection.on("stateChange", (oldState, newState) => {
-      if (
-        newState.status === "destroyed" ||
-        newState.status === "disconnected"
-      ) {
-        client.removeListener("interactionCreate", listener);
+    const disconnectListener = () => {
+      client.removeListener("interactionCreate", interactionListener);
 
-        reply.delete();
+      reply.delete();
 
-        this.setState(State.Disconnected);
+      this.setState(State.Disconnected);
 
-        actionManager.clear();
-      }
-    });
+      actionManager.clear();
+    };
+
+    voiceConnection.on(VoiceConnectionStatus.Disconnected, disconnectListener);
+    voiceConnection.on(VoiceConnectionStatus.Destroyed, disconnectListener);
   }
 
   private setState(state: State): void {

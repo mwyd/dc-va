@@ -1,8 +1,10 @@
 import { ButtonBuilder, ButtonInteraction, ButtonStyle } from "discord.js";
 import {
+  AudioPlayerStatus,
   createAudioPlayer,
   createAudioResource,
   EndBehaviorType,
+  NoSubscriberBehavior,
   VoiceConnection,
 } from "@discordjs/voice";
 import { ButtonAction } from "./button-action";
@@ -18,8 +20,9 @@ import fs from "fs";
 enum State {
   Idle = "idle",
   Listening = "listening",
-  Processing = "processing",
-  Finishing = "finishing",
+  Buffering = "buffering",
+  Buffered = "buffered",
+  Paused = "paused",
 }
 
 export default class AskAction extends ButtonAction {
@@ -53,7 +56,7 @@ export default class AskAction extends ButtonAction {
 
     const { user } = interaction;
 
-    const listener = async (userId: string) => {
+    const startSpeakingListener = async (userId: string) => {
       if (userId !== user.id) {
         return;
       }
@@ -65,11 +68,7 @@ export default class AskAction extends ButtonAction {
       }
     };
 
-    const { speaking } = voiceConnection.receiver;
-
-    speaking.on("start", listener);
-
-    speaking.on("end", (userId) => {
+    const stopSpeakingListener = (userId: string) => {
       if (userId !== user.id || this.state !== State.Listening) {
         return;
       }
@@ -78,8 +77,13 @@ export default class AskAction extends ButtonAction {
 
       this.editReply(interaction);
 
-      speaking.removeListener("start", listener);
-    });
+      speaking.removeListener("start", startSpeakingListener);
+    };
+
+    const { speaking } = voiceConnection.receiver;
+
+    speaking.on("start", startSpeakingListener);
+    speaking.on("end", stopSpeakingListener);
   }
 
   private async handleSpeaking(
@@ -99,46 +103,55 @@ export default class AskAction extends ButtonAction {
 
     const file = await voiceRecorder.record(opusStream);
 
-    const player = createAudioPlayer();
+    const player = createAudioPlayer({
+      behaviors: {
+        noSubscriber: NoSubscriberBehavior.Pause,
+      },
+    });
 
-    player.on("stateChange", (oldState, newState) => {
-      if (
-        (oldState.status == "playing" && newState.status == "idle") ||
-        newState.status == "autopaused"
-      ) {
-        const tts = this.ttsQueue.shift();
+    player.on(AudioPlayerStatus.AutoPaused, () => {
+      this.setState(State.Paused);
+    });
 
-        if (tts) {
-          fs.unlinkSync(tts);
-        }
+    player.on(AudioPlayerStatus.Idle, () => {
+      const tts = this.ttsQueue.shift();
 
-        const nextTts = this.ttsQueue[0];
-
-        if (nextTts) {
-          player.play(createAudioResource(nextTts));
-
-          return;
-        }
-
-        if (this.state !== State.Finishing) {
-          return;
-        }
-
-        this.setState(State.Idle);
-
-        this.button.setDisabled(false);
-        this.button.setLabel("Ask");
-
-        this.editReply(interaction);
+      if (tts) {
+        fs.unlinkSync(tts);
       }
+
+      const nextTts = this.ttsQueue[0];
+
+      if (nextTts) {
+        player.play(createAudioResource(nextTts));
+
+        return;
+      }
+
+      if (this.state !== State.Buffered) {
+        return;
+      }
+
+      this.setState(State.Idle);
+
+      this.button.setDisabled(false);
+      this.button.setLabel("Ask");
+
+      this.editReply(interaction);
     });
 
     voiceConnection.subscribe(player);
 
-    this.setState(State.Processing);
+    this.setState(State.Buffering);
 
     for await (const tts of engine.process(file)) {
       this.ttsQueue.push(tts);
+
+      if (this.state === State.Paused) {
+        this.clearTtsQueue();
+
+        break;
+      }
 
       if (this.ttsQueue.length > 1) {
         continue;
@@ -149,7 +162,9 @@ export default class AskAction extends ButtonAction {
 
     fs.unlinkSync(file);
 
-    this.setState(State.Finishing);
+    if (this.state === State.Buffering) {
+      this.setState(State.Buffered);
+    }
   }
 
   private async editReply(interaction: ButtonInteraction): Promise<void> {
@@ -164,5 +179,13 @@ export default class AskAction extends ButtonAction {
     this.state = state;
 
     logger.info(`Ask action state changed to '${state}'`);
+  }
+
+  private clearTtsQueue(): void {
+    for (const tts of this.ttsQueue) {
+      fs.unlinkSync(tts);
+    }
+
+    this.ttsQueue = [];
   }
 }

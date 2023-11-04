@@ -1,6 +1,6 @@
 import "./dotenv";
 
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, Events, GatewayIntentBits } from "discord.js";
 import { commandManager, logger } from "./config";
 
 commandManager.load().then(() => commandManager.synchronize());
@@ -14,11 +14,11 @@ const client = new Client({
   ],
 });
 
-client.once("ready", (c) => {
+client.once(Events.ClientReady, (c) => {
   logger.info(`Ready! Logged in as ${c.user.tag}`);
 });
 
-client.on("interactionCreate", async (interaction) => {
+client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) {
     return;
   }
