@@ -3,7 +3,7 @@ import "./dotenv";
 import { Client, Events, GatewayIntentBits } from "discord.js";
 import { commandManager, logger } from "./config";
 
-commandManager.load().then(() => commandManager.synchronize());
+commandManager.load();
 
 const client = new Client({
   intents: [
@@ -16,6 +16,10 @@ const client = new Client({
 
 client.once(Events.ClientReady, (c) => {
   logger.info(`Ready! Logged in as ${c.user.tag}`);
+});
+
+client.on(Events.GuildAvailable, (guild) => {
+  commandManager.synchronize(guild.id);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {

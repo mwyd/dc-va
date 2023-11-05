@@ -40,37 +40,34 @@ export class CommandManager {
     }
   }
 
-  public async synchronize(): Promise<void> {
+  public async synchronize(guildId: string): Promise<void> {
     const body = this.commands.map((c) => c.data.toJSON());
     const encodedBody = JSON.stringify(body);
 
-    const cache = this.getSynchronizeCache();
+    const cache = this.getSynchronizeCache(guildId);
 
     if (cache === encodedBody) {
-      logger.info("Commands already synchronized");
+      logger.info(`Guild '${guildId}' - commands already synchronized`);
 
       return;
     }
 
     try {
       await discordREST.put(
-        Routes.applicationGuildCommands(
-          process.env.DISCORD_CLIENT_ID,
-          process.env.DISCORD_GUILD_ID,
-        ),
+        Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID, guildId),
         { body },
       );
 
-      this.setSynchronizeCache(encodedBody);
+      this.setSynchronizeCache(guildId, encodedBody);
 
-      logger.info("Commands successfully synchronized");
+      logger.info(`Guild '${guildId}' - commands successfully synchronized`);
     } catch {
-      logger.warn("Failed to synchronize commands");
+      logger.warn(`Guild '${guildId}' - failed to synchronize commands`);
     }
   }
 
-  private getSynchronizeCache(): string | null {
-    const pathname = this.getSynchronizeCachePathname();
+  private getSynchronizeCache(id: string): string | null {
+    const pathname = this.getSynchronizeCachePathname(id);
 
     if (!fs.existsSync(pathname)) {
       return null;
@@ -79,15 +76,15 @@ export class CommandManager {
     return fs.readFileSync(pathname, { encoding: "utf8" });
   }
 
-  private setSynchronizeCache(data: string): void {
-    const pathname = this.getSynchronizeCachePathname();
+  private setSynchronizeCache(id: string, data: string): void {
+    const pathname = this.getSynchronizeCachePathname(id);
 
     fs.writeFileSync(pathname, data);
   }
 
-  private getSynchronizeCachePathname(): string {
+  private getSynchronizeCachePathname(id: string): string {
     const { cacheDir } = this.config;
 
-    return `${cacheDir}/_command_manager_sync_cache.json`;
+    return `${cacheDir}/cm_${id}.json`;
   }
 }
