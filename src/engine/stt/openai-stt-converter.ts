@@ -5,7 +5,7 @@ import { TranscriptionCreateParams } from "openai/resources/audio";
 
 interface Config {
   model: TranscriptionCreateParams["model"];
-  lang: string;
+  lang?: string;
 }
 
 export class OpenAISTTConverter implements SpeechToTextConverter {
