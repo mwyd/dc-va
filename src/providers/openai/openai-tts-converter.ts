@@ -1,5 +1,5 @@
-import { TextToSpeechConverter } from "./tts-converter";
-import { openai } from "../../openai";
+import { TextToSpeechConverter } from "../../engine/tts-converter";
+import { openai } from "./index";
 import { SpeechCreateParams } from "openai/resources/audio";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
@@ -10,7 +10,7 @@ interface Config {
   outDir: string;
 }
 
-export class OpenaiTTSConverter implements TextToSpeechConverter {
+export class OpenAITTSConverter implements TextToSpeechConverter {
   constructor(private readonly config: Config) {}
 
   async convert(text: string): Promise<string> {

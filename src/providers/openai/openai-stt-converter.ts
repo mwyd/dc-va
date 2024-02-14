@@ -1,5 +1,5 @@
-import { SpeechToTextConverter } from "./stt-converter";
-import { openai } from "../../openai";
+import { SpeechToTextConverter } from "../../engine/stt-converter";
+import { openai } from "./index";
 import fs from "fs";
 import { TranscriptionCreateParams } from "openai/resources/audio";
 

@@ -1,5 +1,5 @@
-import { Assistant } from "./assistant";
-import { openai } from "../../openai";
+import { Assistant } from "../../engine/assistant";
+import { openai } from "./index";
 import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions";
 
 interface Config {

@@ -1,4 +1,4 @@
-import { TextToSpeechConverter } from "./tts-converter";
+import { TextToSpeechConverter } from "../../engine/tts-converter";
 import { spawn } from "child_process";
 import { v4 as uuidv4 } from "uuid";
 

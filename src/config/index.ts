@@ -1,8 +1,8 @@
 import { Engine } from "../engine";
 // import { GTTSConverter } from "../engine/tts/gtts-converter";
-import { OpenaiTTSConverter } from "../engine/tts/openai-tts-converter";
-import { OpenAISTTConverter } from "../engine/stt/openai-stt-converter";
-import { OpenAIAssistant } from "../engine/assistant/openai-assistant";
+import { OpenAITTSConverter } from "../providers/openai/openai-tts-converter";
+import { OpenAISTTConverter } from "../providers/openai/openai-stt-converter";
+import { OpenAIAssistant } from "../providers/openai/openai-assistant";
 import { VoiceRecorder } from "../voice/voice-recorder";
 import { FFmpeg } from "../audio/ffmpeg";
 import { CommandManager } from "../commands/command-manager";
@@ -13,7 +13,7 @@ import winston from "winston";
 export const ASK_SILENCE_TIMEOUT = 500;
 
 // const tts = new GTTSConverter({ outDir: "var/tmp", lang: "pl" });
-const tts = new OpenaiTTSConverter({
+const tts = new OpenAITTSConverter({
   outDir: "var/tmp",
   voice: "nova",
   model: "tts-1",

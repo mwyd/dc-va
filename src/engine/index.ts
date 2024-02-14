@@ -1,6 +1,6 @@
-import { TextToSpeechConverter } from "./tts/tts-converter";
-import { SpeechToTextConverter } from "./stt/stt-converter";
-import { Assistant } from "./assistant/assistant";
+import { TextToSpeechConverter } from "./tts-converter";
+import { SpeechToTextConverter } from "./stt-converter";
+import { Assistant } from "./assistant";
 
 export class Engine {
   constructor(
