@@ -1,11 +1,11 @@
-import ActionManager from "./action-manager";
+import { ActionManager } from "./action-manager";
 import { getVoiceConnection, VoiceConnection } from "@discordjs/voice";
 import { ButtonInteraction } from "discord.js";
 import { logger } from "../../../config";
 
 export const actionManager = new ActionManager();
 
-export default async function accessVoiceConnection(
+export async function accessVoiceConnection(
   interaction: ButtonInteraction,
 ): Promise<VoiceConnection | undefined> {
   const { guild, user } = interaction;

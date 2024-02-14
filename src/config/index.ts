@@ -1,5 +1,6 @@
 import { Engine } from "../engine";
 // import { GTTSConverter } from "../engine/tts/gtts-converter";
+import { OpenaiTTSConverter } from "../engine/tts/openai-tts-converter";
 import { OpenAISTTConverter } from "../engine/stt/openai-stt-converter";
 import { OpenAIAssistant } from "../engine/assistant/openai-assistant";
 import { VoiceRecorder } from "../voice/voice-recorder";
@@ -8,7 +9,6 @@ import { CommandManager } from "../commands/command-manager";
 import path from "path";
 import { REST } from "discord.js";
 import winston from "winston";
-import OpenaiTTSConverter from "../engine/tts/openai-tts-converter";
 
 export const ASK_SILENCE_TIMEOUT = 500;
 

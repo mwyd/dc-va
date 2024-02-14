@@ -1,8 +1,8 @@
 import { ButtonBuilder, ButtonInteraction, ButtonStyle } from "discord.js";
 import { ButtonAction } from "./button-action";
-import accessVoiceConnection from "./index";
+import { accessVoiceConnection } from "./index";
 
-export default class CancelAction extends ButtonAction {
+export class CancelAction extends ButtonAction {
   constructor() {
     const button = new ButtonBuilder()
       .setCustomId("#cancel")

@@ -14,7 +14,7 @@ import {
   logger,
   voiceRecorder,
 } from "../../../config";
-import accessVoiceConnection, { actionManager } from "./index";
+import { accessVoiceConnection, actionManager } from "./index";
 import fs from "fs";
 
 enum State {
@@ -25,7 +25,7 @@ enum State {
   Paused = "paused",
 }
 
-export default class AskAction extends ButtonAction {
+export class AskAction extends ButtonAction {
   private state: State = State.Idle;
   private ttsQueue: string[] = [];
 

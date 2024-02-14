@@ -1,13 +1,13 @@
 import { ButtonAction } from "./button-action";
 import { ActionRowBuilder, ButtonBuilder } from "discord.js";
-import AskAction from "./ask-action";
-import CancelAction from "./cancel-action";
+import { AskAction } from "./ask-action";
+import { CancelAction } from "./cancel-action";
 
 function getButtonActions(): ButtonAction[] {
   return [new AskAction(), new CancelAction()];
 }
 
-export default class ActionManager {
+export class ActionManager {
   private actions: Map<string, ButtonAction> = new Map();
   private row: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder();
 

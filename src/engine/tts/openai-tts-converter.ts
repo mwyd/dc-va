@@ -10,7 +10,7 @@ interface Config {
   outDir: string;
 }
 
-export default class OpenaiTTSConverter implements TextToSpeechConverter {
+export class OpenaiTTSConverter implements TextToSpeechConverter {
   constructor(private readonly config: Config) {}
 
   async convert(text: string): Promise<string> {
